@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>珠三角咖啡门店 · 2025 年度经营看板</title>
+<style>
+  :root{
+    --bg:#f4f6fa;
+    --card:#ffffff;
+    --ink:#1f2937;
+    --muted:#64748b;
+    --line:#e3e8f0;
+    --accent:#2563eb;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Helvetica Neue",Arial,sans-serif;
+    font-size:17px;
+    line-height:1.65;
+    -webkit-text-size-adjust:100%;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:26px 16px 64px;}
+
+  header h1{font-size:26px;line-height:1.35;margin:0 0 8px;letter-spacing:.3px;}
+  header .sub{margin:0;color:var(--muted);font-size:17px;}
+
+  /* ---------- 筛选按钮 ---------- */
+  .filters{
+    display:flex;flex-wrap:wrap;gap:10px;
+    margin:24px 0 20px;
+  }
+  .filters button{
+    font:inherit;font-size:17px;line-height:1.2;
+    padding:10px 20px;
+    border-radius:999px;
+    border:1px solid var(--line);
+    background:#fff;
+    color:#334155;
+    cursor:pointer;
+    transition:background .16s,color .16s,border-color .16s,box-shadow .16s;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .filters button:hover{border-color:#c7d2fe;background:#f7f9ff;}
+  .filters button.active{
+    background:var(--accent);
+    border-color:var(--accent);
+    color:#fff;
+    box-shadow:0 2px 8px rgba(37,99,235,.28);
+  }
+
+  /* ---------- 数字卡片 ---------- */
+  .cards{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:14px;
+    margin-bottom:22px;
+  }
+  @media (max-width:820px){ .cards{grid-template-columns:repeat(2,1fr);} }
+  .card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:16px 18px 18px;
+    box-shadow:0 1px 3px rgba(15,23,42,.06);
+  }
+  .card .label{font-size:17px;color:var(--muted);margin-bottom:6px;}
+  .card .value{font-size:27px;font-weight:700;letter-spacing:.3px;line-height:1.3;word-break:break-all;}
+  .card .unit{font-size:17px;font-weight:400;color:var(--muted);margin-left:2px;}
+
+  /* ---------- 图表卡片 ---------- */
+  .panel{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:18px 18px 14px;
+    margin-bottom:20px;
+    box-shadow:0 1px 3px rgba(15,23,42,.06);
+  }
+  .panel h2{
+    font-size:20px;margin:0 0 4px;line-height:1.4;
+  }
+  .panel .hint{
+    font-size:17px;color:var(--muted);margin:0 0 12px;
+  }
+  .chart{width:100%;}
+  .chart svg{display:block;width:100%;height:auto;}
+  .legend{
+    display:flex;flex-wrap:wrap;gap:8px 20px;
+    margin-top:12px;font-size:17px;color:#475569;
+  }
+  .legend span{display:inline-flex;align-items:center;}
+  .legend i{
+    display:inline-block;width:15px;height:15px;border-radius:4px;
+    margin-right:8px;flex:0 0 auto;
+  }
+
+  /* ---------- 悬浮提示 ---------- */
+  #tip{
+    position:fixed;
+    display:none;
+    z-index:999;
+    max-width:280px;
+    padding:10px 13px;
+    background:rgba(23,32,49,.95);
+    color:#fff;
+    font-size:15px;
+    line-height:1.6;
+    border-radius:10px;
+    box-shadow:0 8px 22px rgba(15,23,42,.28);
+    pointer-events:none;
+    white-space:normal;
+  }
+
+  /* ---------- 底部说明 ---------- */
+  footer{
+    margin-top:30px;
+    padding:20px 20px 6px;
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:16px;
+    font-size:17px;
+    color:#374151;
+  }
+  footer h2{font-size:19px;margin:0 0 10px;color:var(--ink);}
+  footer ul{margin:0;padding-left:22px;}
+  footer li{margin-bottom:7px;}
+  footer .note{color:var(--muted);font-size:17px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>珠三角 12 家咖啡门店 · 2025 年度经营看板</h1>
+    <p class="sub">数据来源：门店月度经营数据上报明细（清洗后版本）｜ 2025 年 1—12 月 ｜ 单位：元 / 分</p>
+  </header>
+
+  <div class="filters" id="filters"></div>
+
+  <section class="cards">
+    <div class="card">
+      <div class="label">门店数</div>
+      <div class="value" id="cardStores">—</div>
+    </div>
+    <div class="card">
+      <div class="label">全年总营业额</div>
+      <div class="value" id="cardRev">—</div>
+    </div>
+    <div class="card">
+      <div class="label">平均客单价</div>
+      <div class="value" id="cardPrice">—</div>
+    </div>
+    <div class="card">
+      <div class="label">平均满意度</div>
+      <div class="value" id="cardSat">—</div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>图 1　各门店全年营业额排行</h2>
+    <p class="hint">横向条形图 · 按全年营业额从大到小排序 · 横轴单位：万元</p>
+    <div class="chart" id="barChart"></div>
+  </section>
+
+  <section class="panel">
+    <h2>图 2　月度营业额走势</h2>
+    <p class="hint" id="lineHint">折线图 · 横轴：1—12 月 · 纵轴单位：万元</p>
+    <div class="chart" id="lineChart"></div>
+    <div class="legend" id="lineLegend"></div>
+  </section>
+
+  <section class="panel">
+    <h2>图 3　门店规模与顾客满意度</h2>
+    <p class="hint">散点图 · 横轴：全年营业额（万元） · 纵轴：全年平均满意度（分，满分 5 分）</p>
+    <div class="chart" id="scatterChart"></div>
+  </section>
+
+  <footer>
+    <h2>数据说明</h2>
+    <ul>
+      <li><strong>数据来源：</strong>本看板数据取自《咖啡门店经营数据_综合练习》工作簿中的「2-清洗后数据」工作表，该表由「1-原始数据」逐行清洗得到（修复公式型异常值、按基准参数补齐缺失值、统一城市名称、剔除重复上报行）。</li>
+      <li><strong>时间范围：</strong>2025 年 1 月 — 2025 年 12 月，共 12 家门店 × 12 个月 = 144 条门店月度记录。</li>
+      <li><strong>覆盖城市：</strong>广州（3 家）、深圳（3 家）、东莞（2 家）、佛山（2 家）、珠海（1 家）、中山（1 家）。</li>
+      <li><strong>指标口径：</strong>
+        <br>· 门店数 —— 当前筛选范围内纳入统计的门店个数，单位「家」；
+        <br>· 全年总营业额 —— 各门店 12 个月营业额直接相加，原始单位「元」，卡片中换算为「万元」；
+        <br>· 平均客单价 —— 门店月度客单价（元/单）的算术平均：先对每家门店的 12 个月求均值，再对筛选出的门店求均值，单位「元」；
+        <br>· 平均满意度 —— 门店月度顾客评分（满分 5 分）的算术平均，口径同上，单位「分」。
+      </li>
+      <li><strong>图表口径：</strong>图 1 与图 2 的营业额均以「万元」显示；图 2 在筛选「全部」时按城市汇总展示（6 条线），筛选单个城市时按门店展示；图 3 横轴为门店全年营业额（万元），纵轴为门店全年平均满意度（分）。</li>
+      <li><strong>校验提示：</strong>原始数据中的「日均订单」为四舍五入取整值，用「客单价 × 日均订单 × 30」反算营业额会有约 0.02% 的差异，属于正常口径误差，不影响汇总结论。</li>
+      <li><strong>数据性质：</strong>本表为教学用模拟数据，门店、城市、品牌均不对应任何真实企业。</li>
+    </ul>
+    <p class="note">鼠标移到图表的条形、圆点或折线节点上，可查看该点的具体数值；手机端可轻点查看。</p>
+  </footer>
+
+</div>
+
+<div id="tip"></div>
+
+<script>
+/* =========================================================
+   1. 数据（来源：工作簿「2-清洗后数据」，2025 年 1—12 月）
+   ========================================================= */
+const MONTHS = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+
+const RAW = [
+  { id:'GZ01', name:'广州天河店', city:'广州',
+    rev:[1557360,1310400,1564416,1675800,1747872,1812888,1854720,2044224,1764672,1728720,1659840,1851528],
+    price:[34.8,34,33.2,35.2,34.4,33.6,32.8,34.8,34,33.2,35.2,34.4],
+    sat:[4.7,4.5,4.8,4.6,4.4,4.7,4.5,4.8,4.6,4.4,4.7,4.5] },
+
+  { id:'GZ02', name:'广州越秀店', city:'广州',
+    rev:[881000,827424,988992,988380,988380,1145154,1173000,1157598,1113840,1092420,1047744,1047744],
+    price:[29.4,28.6,27.8,29.8,29,28.2,30.2,29.4,28.6,27.8,29.8,29],
+    sat:[4.4,4.2,4.5,4.3,4.1,4.4,4.2,4.5,4.3,4.1,4.4,4.2] },
+
+  { id:'GZ03', name:'广州番禺店', city:'广州',
+    rev:[468000,393432,524160,503880,525096,544000,621920,614484,529984,518700,557024,556400],
+    price:[22,21.2,23.2,22.4,21.6,20.8,22.8,22,21.2,23.2,22.4,21.6],
+    sat:[4,3.8,4.1,3.9,3.7,4,3.8,4.1,3.9,3.7,4,3.8] },
+
+  { id:'SZ01', name:'深圳南山店', city:'深圳',
+    rev:[1797120,1512576,1806336,1732800,2017152,2092800,2141760,2358720,2036736,1995840,1916928,2136576],
+    price:[37.6,36.8,38.8,38,37.2,39.2,38.4,37.6,36.8,38.8,38,37.2],
+    sat:[4.6,4.4,4.7,4.5,4.3,4.6,4.4,4.7,4.5,4.3,4.6,4.4] },
+
+  { id:'SZ02', name:'深圳福田店', city:'深圳',
+    rev:[1396800,1310400,1566720,1504800,1566720,1813760,1858400,1834560,1580800,1730400,1664000,1660640],
+    price:[35.2,37.2,36.4,35.6,34.8,36.8,36,35.2,37.2,36.4,35.6,34.8],
+    sat:[4.8,4.6,4.9,4.7,4.5,4.8,4.6,4.9,4.7,4.5,4.8,4.6] },
+
+  { id:'SZ03', name:'深圳宝安店', city:'深圳',
+    rev:[854460,718536,857280,919790,958800,993862,1135050,1121796,967824,947520,1016704,1015858],
+    price:[25.8,27.8,27,26.2,28.2,27.4,26.6,25.8,27.8,27,26.2,28.2],
+    sat:[4.2,4,4.3,4.1,3.9,4.2,4,4.3,4.1,3.9,4.2,4] },
+
+  { id:'DG01', name:'东莞南城店', city:'东莞',
+    rev:[434700,365976,437184,419520,488000,506414,518420,511290,492752,483000,464048,516810],
+    price:[22.2,21.4,20.6,19.8,21.8,21,20.2,22.2,21.4,20.6,19.8,21.8],
+    sat:[3.9,3.7,4,3.8,3.6,3.9,3.7,4,3.8,3.6,3.9,3.7] },
+
+  { id:'DG02', name:'东莞松山湖店', city:'东莞',
+    rev:[723240,607620,810816,779000,949806,938490,961860,949806,818688,895440,861328,860000],
+    price:[25.8,25,24.2,26.2,25.4,24.6,23.8,25.8,25,24.2,26.2,25.4],
+    sat:[4.3,4.1,4.4,4.2,4,4.3,4.1,4.4,4.2,4,4.3,4.1] },
+
+  { id:'FS01', name:'佛山禅城店', city:'佛山',
+    rev:[660960,555984,663552,711360,741744,769104,786600,867672,748800,733320,786240,785808],
+    price:[24.4,23.6,22.8,24.8,24,23.2,25.2,24.4,23.6,22.8,24.8,24],
+    sat:[4.1,3.9,4.2,4,3.8,4.1,3.9,4.2,4,3.8,4.1,3.9] },
+
+  { id:'FS02', name:'佛山南海店', city:'佛山',
+    rev:[367650,345462,412800,396245,460530,478074,489555,482976,465088,456015,438256,437095],
+    price:[20,19.2,21.2,20.4,19.6,18.8,20.8,20,19.2,21.2,20.4,19.6],
+    sat:[3.8,3.6,3.9,3.7,3.5,3.8,3.6,3.9,3.7,3.5,3.8,3.6] },
+
+  { id:'ZH01', name:'珠海香洲店', city:'珠海',
+    rev:[694980,584000,778752,748410,779688,807690,923910,912600,786864,859950,827424,826254],
+    price:[25.6,24.8,26.8,26,25.2,27.2,26.4,25.6,24.8,26.8,26,25.2],
+    sat:[4.5,4.3,4.6,4.4,4.2,4.5,4.3,4.6,4.4,4.2,4.5,4.3] },
+
+  { id:'ZS01', name:'中山石岐店', city:'中山',
+    rev:[444960,374400,446976,478800,499392,517968,529920,584000,504192,493920,474240,529008],
+    price:[22.2,24.2,23.4,22.6,21.8,23.8,23,22.2,24.2,23.4,22.6,21.8],
+    sat:[4.1,3.9,4.2,4,3.8,4.1,3.9,4.2,4,3.8,4.1,3.9] }
+];
+
+const PALETTE = ['#2563eb','#0d9488','#d97706','#dc2626','#7c3aed','#0891b2',
+                 '#db2777','#65a30d','#ea580c','#4f46e5','#059669','#b45309'];
+const CITIES  = ['广州','深圳','东莞','佛山','珠海','中山'];
+
+/* 派生指标 */
+const STORES = RAW.map((s, i) => ({
+  id: s.id,
+  name: s.name,
+  city: s.city,
+  rev: s.rev,
+  price: s.price,
+  sat: s.sat,
+  color: PALETTE[i % PALETTE.length],
+  totalRev: s.rev.reduce((a, b) => a + b, 0),
+  avgPrice: s.price.reduce((a, b) => a + b, 0) / s.price.length,
+  avgSat:   s.sat.reduce((a, b) => a + b, 0) / s.sat.length
+}));
+
+/* =========================================================
+   2. 通用工具
+   ========================================================= */
+function niceMax(v){
+  if (!isFinite(v) || v <= 0) return 1;
+  const exp = Math.pow(10, Math.floor(Math.log10(v)));
+  const f = v / exp;
+  let nf;
+  if (f <= 1) nf = 1;
+  else if (f <= 2) nf = 2;
+  else if (f <= 2.5) nf = 2.5;
+  else if (f <= 5) nf = 5;
+  else nf = 10;
+  return nf * exp;
+}
+
+/* 元 → 万元字符串 */
+function wan(v){
+  const w = v / 10000;
+  if (w >= 100) return Math.round(w).toLocaleString('zh-CN');
+  return w.toFixed(1);
+}
+
+/* 元 → 带一位小数的万元 */
+function wan1(v){ return (v / 10000).toFixed(1); }
+
+function tipAttr(lines){
+  return lines.join('&lt;br&gt;').replace(/"/g, '&quot;');
+}
+
+const tipEl = document.getElementById('tip');
+
+function showTip(html, e){
+  tipEl.innerHTML = html;
+  tipEl.style.display = 'block';
+  const pad = 14;
+  let x = e.clientX + pad;
+  let y = e.clientY + pad;
+  const r = tipEl.getBoundingClientRect();
+  if (x + r.width > window.innerWidth - 8) x = e.clientX - r.width - pad;
+  if (y + r.height > window.innerHeight - 8) y = e.clientY - r.height - pad;
+  if (x < 8) x = 8;
+  if (y < 8) y = 8;
+  tipEl.style.left = x + 'px';
+  tipEl.style.top  = y + 'px';
+}
+function hideTip(){ tipEl.style.display = 'none'; }
+
+function attachTip(container){
+  container.querySelectorAll('[data-tip]').forEach(el => {
+    el.style.cursor = 'pointer';
+    el.addEventListener('pointerenter', e => showTip(el.dataset.tip, e));
+    el.addEventListener('pointermove',  e => showTip(el.dataset.tip, e));
+    el.addEventListener('pointerdown',  e => showTip(el.dataset.tip, e));
+    el.addEventListener('pointerleave', hideTip);
+  });
+  container.addEventListener('pointerleave', hideTip);
+}
+
+/* =========================================================
+   3. 状态与筛选
+   ========================================================= */
+let currentCity = 'ALL';
+
+function getStores(){
+  return currentCity === 'ALL' ? STORES : STORES.filter(s => s.city === currentCity);
+}
+
+const filtersEl = document.getElementById('filters');
+['ALL', ...CITIES].forEach(city => {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.textContent = city === 'ALL' ? '全部城市' : city;
+  btn.dataset.city = city;
+  if (city === 'ALL') btn.classList.add('active');
+  btn.addEventListener('click', () => {
+    currentCity = city;
+    filtersEl.querySelectorAll('button').forEach(b =>
+      b.classList.toggle('active', b.dataset.city === city));
+    renderAll();
+  });
+  filtersEl.appendChild(btn);
+});
+
+/* =========================================================
+   4. 数字卡片
+   ========================================================= */
+function renderCards(stores){
+  const n = stores.length;
+  const totalRev = stores.reduce((a, s) => a + s.totalRev, 0);
+  const avgPrice = n ? stores.reduce((a, s) => a + s.avgPrice, 0) / n : 0;
+  const avgSat   = n ? stores.reduce((a, s) => a + s.avgSat,   0) / n : 0;
+
+  document.getElementById('cardStores').innerHTML =
+    n + '<span class="unit">家</span>';
+  document.getElementById('cardRev').innerHTML =
+    totalRev.toLocaleString('zh-CN') .replace(/,/g,'') === '' ? '—' :
+    (totalRev / 10000).toLocaleString('zh-CN', {minimumFractionDigits:1, maximumFractionDigits:1}) +
+    '<span class="unit">万元</span>';
+  document.getElementById('cardPrice').innerHTML =
+    avgPrice.toFixed(2) + '<span class="unit">元</span>';
+  document.getElementById('cardSat').innerHTML =
+    avgSat.toFixed(2) + '<span class="unit">分</span>';
+}
+
+/* =========================================================
+   5. 图 1：各门店全年营业额横向条形图
+   ========================================================= */
+function renderBar(stores){
+  const box = document.getElementById('barChart');
+  const W = Math.max(320, box.clientWidth || 320);
+  const data = [...stores].sort((a, b) => b.totalRev - a.totalRev);
+
+  const rowH = 42;
+  const m = { t: 12, r: 92, b: 58, l: 118 };
+  const H = m.t + data.length * rowH + m.b;
+  const innerW = W - m.l - m.r;
+  const max = niceMax(data[0].totalRev);
+
+  let s = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="各门店全年营业额排行">`;
+
+  /* 网格与刻度 */
+  for (let i = 0; i <= 4; i++){
+    const x = m.l + innerW * i / 4;
+    const v = max * i / 4;
+    s += `<line x1="${x}" y1="${m.t}" x2="${x}" y2="${m.t + data.length * rowH}" stroke="#e6eaf2" stroke-width="1"/>`;
+    s += `<text x="${x}" y="${m.t + data.length * rowH + 24}" text-anchor="middle" font-size="14" fill="#8a95a5">${wan(v)}</text>`;
+  }
+
+  /* 条形 */
+  data.forEach((d, i) => {
+    const rowY = m.t + i * rowH;
+    const barY = rowY + 9;
+    const barH = rowH - 18;
+    const w = Math.max(2, (d.totalRev / max) * innerW);
+
+    s += `<rect x="${m.l}" y="${barY}" width="${w}" height="${barH}" rx="5" fill="${d.color}" opacity="0.92"/>`;
+    s += `<text x="${m.l - 12}" y="${barY + barH / 2 + 6}" text-anchor="end" font-size="16" fill="#1f2937">${d.name}</text>`;
+    s += `<text x="${m.l + w + 10}" y="${barY + barH / 2 + 6}" font-size="14" fill="#475569">${wan1(d.totalRev)}</text>`;
+
+    const tip = tipAttr([
+      d.name + '（' + d.city + ' · ' + d.id + '）',
+      '全年营业额：' + d.totalRev.toLocaleString('zh-CN') + ' 元',
+      '折合：' + wan1(d.totalRev) + ' 万元',
+      '月均营业额：' + Math.round(d.totalRev / 12).toLocaleString('zh-CN') + ' 元',
+      '平均客单价：' + d.avgPrice.toFixed(2) + ' 元',
+      '平均满意度：' + d.avgSat.toFixed(2) + ' 分'
+    ]);
+
+    s += `<rect x="${m.l}" y="${rowY}" width="${innerW}" height="${rowH}" fill="transparent" data-tip="${tip}"/>`;
+  });
+
+  /* 轴标题 */
+  s += `<text x="${m.l + innerW / 2}" y="${H - 12}" text-anchor="middle" font-size="15" fill="#334155">全年营业额（万元）</text>`;
+  s += `</svg>`;
+
+  box.innerHTML = s;
+  attachTip(box);
+}
+
+/* =========================================================
+   6. 图 2：月度营业额折线图
+   ========================================================= */
+function renderLine(stores){
+  const box = document.getElementById('lineChart');
+  const legendBox = document.getElementById('lineLegend');
+  const hintEl = document.getElementById('lineHint');
+
+  const W = Math.max(320, box.clientWidth || 320);
+  const H = 400;
+  const m = { t: 20, r: 26, b: 66, l: 80 };
+  const innerW = W - m.l - m.r;
+  const innerH = H - m.t - m.b;
+
+  let series = [];
+
+  if (stores.length <= 6){
+    hintEl.textContent = '折线图 · 横轴：1—12 月 · 纵轴单位：万元 · 每条线为一家门店';
+    series = stores.map(s => ({ name: s.name, color: s.color, values: s.rev }));
+  } else {
+    hintEl.textContent = '折线图 · 横轴：1—12 月 · 纵轴单位：万元 · 每条线为一个城市（门店合计）';
+    const cities = CITIES.filter(c => stores.some(s => s.city === c));
+    series = cities.map((c, idx) => {
+      const vals = new Array(12).fill(0);
+      stores.filter(s => s.city === c).forEach(s => {
+        s.rev.forEach((v, i) => { vals[i] += v; });
+      });
+      return { name: c, color: PALETTE[idx % PALETTE.length], values: vals };
+    });
+  }
+
+  const allVals = series.reduce((acc, s) => acc.concat(s.values), []);
+  const max = niceMax(Math.max.apply(null, allVals));
+
+  const X = i => m.l + (i / 11) * innerW;
+  const Y = v => m.t + innerH - (v / max) * innerH;
+
+  let s = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="月度营业额走势">`;
+
+  /* 横向网格 + y 轴刻度 */
+  for (let i = 0; i <= 4; i++){
+    const y = m.t + innerH * i / 4;
+    const v = max * (4 - i) / 4;
+    s += `<line x1="${m.l}" y1="${y}" x2="${m.l + innerW}" y2="${y}" stroke="#e6eaf2" stroke-width="1"/>`;
+    s += `<text x="${m.l - 12}" y="${y + 5}" text-anchor="end" font-size="14" fill="#8a95a5">${wan(v)}</text>`;
+  }
+
+  /* x 轴标签 */
+  const labelStep = (innerW / 11) < 42 ? 2 : 1;
+  for (let i = 0; i < 12; i++){
+    if (i % labelStep !== 0 && i !== 11) continue;
+    s += `<text x="${X(i)}" y="${m.t + innerH + 26}" text-anchor="middle" font-size="14" fill="#8a95a5">${MONTHS[i]}</text>`;
+  }
+
+  /* 折线 */
+  series.forEach(ser => {
+    const pts = ser.values.map((v, i) => X(i).toFixed(1) + ',' + Y(v).toFixed(1)).join(' ');
+    s += `<polyline points="${pts}" fill="none" stroke="${ser.color}" stroke-width="2.4"
+            stroke-linejoin="round" stroke-linecap="round" opacity="0.92"/>`;
+  });
+
+  /* 数据点 + 悬浮热区 */
+  series.forEach(ser => {
+    ser.values.forEach((v, i) => {
+      const cx = X(i), cy = Y(v);
+      s += `<circle cx="${cx}" cy="${cy}" r="3.6" fill="#fff" stroke="${ser.color}" stroke-width="2"/>`;
+
+      const tip = tipAttr([
+        ser.name,
+        '月份：' + MONTHS[i],
+        '营业额：' + Math.round(v).toLocaleString('zh-CN') + ' 元',
+        '折合：' + wan1(v) + ' 万元'
+      ]);
+      s += `<circle cx="${cx}" cy="${cy}" r="15" fill="transparent" data-tip="${tip}"/>`;
+    });
+  });
+
+  /* 轴标题 */
+  s += `<text x="${m.l + innerW / 2}" y="${H - 12}" text-anchor="middle" font-size="15" fill="#334155">月份（2025 年）</text>`;
+  s += `</svg>`;
+
+  box.innerHTML = s;
+  attachTip(box);
+
+  legendBox.innerHTML = series.map(ser =>
+    `<span><i style="background:${ser.color}"></i>${ser.name}</span>`
+  ).join('');
+}
+
+/* =========================================================
+   7. 图 3：规模与满意度散点图
+   ========================================================= */
+function renderScatter(stores){
+  const box = document.getElementById('scatterChart');
+  const W = Math.max(320, box.clientWidth || 320);
+  const H = 420;
+  const m = { t: 20, r: 30, b: 66, l: 84 };
+  const innerW = W - m.l - m.r;
+  const innerH = H - m.t - m.b;
+
+  const xs = stores.map(s => s.totalRev / 10000);
+  const ys = stores.map(s => s.avgSat);
+
+  const xMax = niceMax(Math.max.apply(null, xs) * 10000) / 10000;
+  const yMin = Math.floor((Math.min.apply(null, ys) - 0.15) * 10) / 10;
+  const yMax = Math.ceil((Math.max.apply(null, ys) + 0.15) * 10) / 10;
+
+  const X = v => m.l + (v / xMax) * innerW;
+  const Y = v => m.t + innerH - ((v - yMin) / (yMax - yMin)) * innerH;
+
+  let s = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="规模与满意度散点图">`;
+
+  /* 网格：纵向（营业额） */
+  for (let i = 0; i <= 4; i++){
+    const x = m.l + innerW * i / 4;
+    const v = xMax * i / 4;
+    s += `<line x1="${x}" y1="${m.t}" x2="${x}" y2="${m.t + innerH}" stroke="#e6eaf2" stroke-width="1"/>`;
+    s += `<text x="${x}" y="${m.t + innerH + 26}" text-anchor="middle" font-size="14" fill="#8a95a5">${wan(v * 10000)}</text>`;
+  }
+  /* 网格：横向（满意度） */
+  for (let i = 0; i <= 4; i++){
+    const y = m.t + innerH * i / 4;
+    const v = yMax - (yMax - yMin) * i / 4;
+    s += `<line x1="${m.l}" y1="${y}" x2="${m.l + innerW}" y2="${y}" stroke="#e6eaf2" stroke-width="1"/>`;
+    s += `<text x="${m.l - 12}" y="${y + 5}" text-anchor="end" font-size="14" fill="#8a95a5">${v.toFixed(2)}</text>`;
+  }
+
+  /* 散点 */
+  stores.forEach(d => {
+    const cx = X(d.totalRev / 10000);
+    const cy = Y(d.avgSat);
+
+    s += `<circle cx="${cx}" cy="${cy}" r="8" fill="${d.color}" fill-opacity="0.85" stroke="#fff" stroke-width="2"/>`;
+    s += `<text x="${cx + 12}" y="${cy - 9}" font-size="14" fill="#334155">${d.name}</text>`;
+
+    const tip = tipAttr([
+      d.name + '（' + d.city + '）',
+      '全年营业额：' + wan1(d.totalRev) + ' 万元',
+      '平均满意度：' + d.avgSat.toFixed(2) + ' 分',
+      '平均客单价：' + d.avgPrice.toFixed(2) + ' 元'
+    ]);
+    s += `<circle cx="${cx}" cy="${cy}" r="17" fill="transparent" data-tip="${tip}"/>`;
+  });
+
+  /* 轴标题 */
+  s += `<text x="${m.l + innerW / 2}" y="${H - 12}" text-anchor="middle" font-size="15" fill="#334155">全年营业额（万元）</text>`;
+  s += `<text transform="translate(20,${m.t + innerH / 2}) rotate(-90)" text-anchor="middle" font-size="15" fill="#334155">平均满意度（分）</text>`;
+  s += `</svg>`;
+
+  box.innerHTML = s;
+  attachTip(box);
+}
+
+/* =========================================================
+   8. 总渲染
+   ========================================================= */
+function renderAll(){
+  hideTip();
+  const stores = getStores();
+  renderCards(stores);
+  renderBar(stores);
+  renderLine(stores);
+  renderScatter(stores);
+}
+
+/* 首次渲染 + 响应式重绘 */
+let resizeTimer = null;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(renderAll, 160);
+});
+
+window.addEventListener('load', renderAll);
+if (document.readyState === 'complete' || document.readyState === 'interactive'){
+  requestAnimationFrame(renderAll);
+}
+</script>
+</body>
+</html>
